@@ -1,14 +1,14 @@
 package mgiface
 
-// 定义一个服务器接口
+// define server interface
 type IServer interface {
 
-	// 启动服务器
+	// start server
 	Start()
 
-	// 停止服务器
+	// stop server
 	Stop()
 
-	// 运行服务器
+	// run server
 	Serve()
 }

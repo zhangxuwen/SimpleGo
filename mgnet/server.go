@@ -1,100 +1,100 @@
 package mgnet
 
 import (
+	"errors"
 	"fmt"
 	"marcoGo/mgiface"
 	"net"
 )
 
-// IServer 的接口实现，定义一个Server的服务器模块
+// implementation interface of IServer
+// define Server
 type Server struct {
 
-	// 服务器的名称
+	// server name
 	Name string
 
-	// 服务器绑定的ip版本
+	// the IP version bound to the server
 	IPVersion string
 
-	// 服务器监听的IP
+	// the IP listened by the server
 	IP string
 
-	// 服务器监听的端口
+	// the port listened by the server
 	Port string
 }
 
-// 启动服务器
+// the function for start server
 func (s *Server) Start() {
 
-	// 执行启动服务器的标志
+	// the flag of the server is starting
 	fmt.Printf("[marcoGo start] at IP: %s, Port: %s\n", s.IP, s.Port)
 
-	// 获取一个TCP的Addr
+	// get the address of TCP
 	addr, err := net.ResolveTCPAddr(s.IPVersion, s.IP+":"+s.Port)
 	if err != nil {
 		fmt.Printf("[marcoGo error] for %s", err)
 		return
 	}
 
-	// 监听服务器的地址
+	// listen address of server
 	linstener, err := net.ListenTCP(s.IPVersion, addr)
 	if err != nil {
 		fmt.Printf("[marcoGo error] for %s", err)
 		return
 	}
 
-	// 阻塞的等待客户端连接，处理客户端链接业务
+	var cid uint32
+	cid = 0
+
+	// wait for connection
 	for {
-		// 如果有客户端链接过来，阻塞会返回
-		connect, err := linstener.Accept()
+
+		// continue if connect
+		connect, err := linstener.AcceptTCP()
 		if err != nil {
 			fmt.Printf("[marcoGo error] for %s", err)
 			continue
 		}
 
-		// 业务
-		go func() {
-			for {
-				buf := make([]byte, 512)
-				client, err := connect.Read(buf)
-				if err != nil {
-					fmt.Printf("[marcoGo error] for %s", err)
-					continue
-				}
+		// example
+		dealConn := NewConnection(connect, cid, func(conn *net.TCPConn, data []byte, cnt int) error {
 
-				// 回显
-				_, err = connect.Write(buf[:client])
-				if err != nil {
-					fmt.Printf("[marcoGo error] for %s", err)
-					continue
-				}
+			fmt.Println(data[:cnt])
+			if _, err := conn.Write(data[:cnt]); err != nil {
+				return errors.New("call back wall")
 			}
-		}()
+			return nil
+		})
+		cid++
+		go dealConn.Start()
+
 	}
 }
 
-// 停止服务器
+// stop server
 func (s *Server) Stop() {
 
-	// 停止或回收服务器的资源、状态或者一些已经开辟的链接信息
+	// do something
 
 }
 
-// 运行服务器
+// run server
 func (s *Server) Serve() {
 
-	// 启动服务器
+	// start server
 	s.Start()
 
-	// 额外业务
+	// do something
 
-	//阻塞状态
+	// block
 	select {}
 }
 
 /*
-初始化Server模块的方法
+init the server moudule
 */
-func newServer(name string) mgiface.IServer {
+func NewServer(name string) mgiface.IServer {
 	s := &Server{
 		Name:      name,
 		IPVersion: "tcp4",
